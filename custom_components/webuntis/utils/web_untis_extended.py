@@ -154,11 +154,21 @@ class ExtendedSession(WebUntisSession):
 
         QR URIs look like:
         untis://setschool?url=...&school=...&user=...&key=...&schoolNumber=...
+        WebUntis also exposes the same URI inside pimage.do?qrtext=... URLs.
 
         :param qr_uri: The raw QR code URI string
         :returns: dict with server, school, username, key
         """
+        qr_uri = qr_uri.strip()
         parsed = urlparse(qr_uri)
+
+        if parsed.scheme in ("http", "https"):
+            outer_params = parse_qs(parsed.query)
+            qr_text = outer_params.get("qrtext", [None])[0]
+            if qr_text:
+                qr_uri = qr_text.strip()
+                parsed = urlparse(qr_uri)
+
         params = parse_qs(parsed.query)
 
         result = {}
