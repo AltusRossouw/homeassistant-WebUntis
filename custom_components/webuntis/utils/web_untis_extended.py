@@ -54,7 +54,7 @@ class ExtendedSession(WebUntisSession):
                             "auth": {
                                 "clientTime": client_time,
                                 "user": username,
-                                "otp": int(token),
+                                "otp": token,
                             },
                         },
                     ],
