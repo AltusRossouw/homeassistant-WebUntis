@@ -61,8 +61,15 @@ class ExtendedSession(WebUntisSession):
                     "jsonrpc": "2.0",
                 }),
                 headers={
-                    "User-Agent": useragent,
+                    "User-Agent": (
+                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/61.0.3163.79 Safari/537.36"
+                    ),
+                    "Cache-Control": "no-cache",
                     "Content-Type": "application/json",
+                    "Pragma": "no-cache",
+                    "X-Requested-With": "XMLHttpRequest",
                 },
                 timeout=10,
             )
