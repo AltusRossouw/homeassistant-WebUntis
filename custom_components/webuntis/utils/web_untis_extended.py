@@ -32,8 +32,7 @@ class ExtendedSession(WebUntisSession):
         except KeyError as e:
             raise errors.BadCredentialsError("Missing config: " + str(e))
 
-        server_url = self.config["server"]
-        base_url = server_url.rstrip("/")
+        base_url = self._get_base_url()
 
         token = pyotp.TOTP(otp_secret).now()
         client_time = int(time.time() * 1000)
@@ -155,6 +154,10 @@ class ExtendedSession(WebUntisSession):
                 self.login_result["klasseId"] = klasse_id
         except Exception:
             pass
+
+    def _get_base_url(self):
+        """Return the WebUntis origin URL without JSON-RPC endpoint suffixes."""
+        return self.config["server"].replace("/WebUntis/jsonrpc.do", "").rstrip("/")
 
     @staticmethod
     def parse_qr_uri(qr_uri):
