@@ -127,8 +127,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             if not errors:
                 self._user_input_temp["auth_type"] = "qr"
-                self._user_input_temp["key"] = user_input.get("qr_key")
                 return await self.async_step_timetable_source()
+
+        user_input = user_input or {}
 
         return self.async_show_form(
             step_id="qr_login",
