@@ -32,8 +32,7 @@ class ExtendedSession(WebUntisSession):
         except KeyError as e:
             raise errors.BadCredentialsError("Missing config: " + str(e))
 
-        server_url = self.config["server"]
-        base_url = server_url.rstrip("/")
+        base_url = self._get_base_url()
 
         token = pyotp.TOTP(otp_secret).now()
         client_time = int(time.time() * 1000)
@@ -54,15 +53,24 @@ class ExtendedSession(WebUntisSession):
                             "auth": {
                                 "clientTime": client_time,
                                 "user": username,
-                                "otp": int(token),
+                                "otp": token,
                             },
                         },
                     ],
                     "jsonrpc": "2.0",
                 }),
                 headers={
-                    "User-Agent": useragent,
+                    "User-Agent": (
+                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/61.0.3163.79 Safari/537.36"
+                    ),
+                    "Cache-Control": "no-cache",
                     "Content-Type": "application/json",
+                    "Origin": base_url,
+                    "Pragma": "no-cache",
+                    "Referer": f"{base_url}/WebUntis/?school={school}",
+                    "X-Requested-With": "XMLHttpRequest",
                 },
                 timeout=10,
             )
@@ -147,6 +155,10 @@ class ExtendedSession(WebUntisSession):
         except Exception:
             pass
 
+    def _get_base_url(self):
+        """Return the WebUntis origin URL without JSON-RPC endpoint suffixes."""
+        return self.config["server"].replace("/WebUntis/jsonrpc.do", "").rstrip("/")
+
     @staticmethod
     def parse_qr_uri(qr_uri):
         """
@@ -154,11 +166,21 @@ class ExtendedSession(WebUntisSession):
 
         QR URIs look like:
         untis://setschool?url=...&school=...&user=...&key=...&schoolNumber=...
+        WebUntis also exposes the same URI inside pimage.do?qrtext=... URLs.
 
         :param qr_uri: The raw QR code URI string
         :returns: dict with server, school, username, key
         """
+        qr_uri = qr_uri.strip()
         parsed = urlparse(qr_uri)
+
+        if parsed.scheme in ("http", "https"):
+            outer_params = parse_qs(parsed.query)
+            qr_text = outer_params.get("qrtext", [None])[0]
+            if qr_text:
+                qr_uri = qr_text.strip()
+                parsed = urlparse(qr_uri)
+
         params = parse_qs(parsed.query)
 
         result = {}
